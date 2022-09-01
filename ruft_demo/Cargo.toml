@@ -9,3 +9,4 @@ edition = "2021"
 clap = { version = "3.0", features = ["derive"] }
 serde = { version = "1.0.144", features = ["derive"] }
 serde_yaml = { version = "0.9.10" }
+ruft_core = { path = "../ruft_core" }

@@ -1,0 +1,5 @@
+[workspace]
+members = [ 
+  "ruft_core",
+  "ruft_demo",
+]
