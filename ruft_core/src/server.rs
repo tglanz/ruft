@@ -15,6 +15,11 @@ pub trait BlobStorage {
     fn load(&mut self, id: String) -> Result<Vec<u8>, GenericError>;
 }
 
+pub trait Rpc {
+    fn send_recieve<M, R>(&mut self, message: M) -> Result<R, GenericError>;
+    fn broadcast<M>(&mut self, message: M) -> Result<(), GenericError>;
+}
+
 pub enum ServerState {
     Leader,
     Follower,
@@ -25,19 +30,20 @@ pub trait StateMachine<C: Command> {
     fn apply(&mut self, command: C) -> Result<(), GenericError>;
 }
 
-pub struct Server<'a, C: Command, S: StateMachine<C>> {
+
+pub struct Server<B: BlobStorage, C: Command, S: StateMachine<C>> {
     state: ServerState,
 
     persistent_server_state: PersistentServerState<C>,
     volatile_server_state: VolatileServerState,
     volatile_leader_state: Option<VolatileLeaderState>,
 
-    blob_storage: &'a mut dyn BlobStorage,
-    state_machine: &'a mut S,
+    blob_storage: B, 
+    state_machine: S,
 }
 
-impl<'a, C: Command, S: StateMachine<C>> Server<'a, C, S> {
-    pub fn create(blob_storage: &'a mut dyn BlobStorage, state_machine: &'a mut S) -> Result<Self, GenericError> {
+impl<B: BlobStorage, C: Command, S: StateMachine<C>> Server<B, C, S> {
+    pub fn create(blob_storage: B, state_machine: S) -> Result<Self, GenericError> {
         let volatile_server_state = VolatileServerState {
             commit_index: 0,
             last_applied: 0,
@@ -66,6 +72,10 @@ impl<'a, C: Command, S: StateMachine<C>> Server<'a, C, S> {
 
     fn apply_to_state_machine(&mut self, command: C) {
         self.state_machine.apply(command).unwrap();
+    }
+
+    fn receive_command(&mut self, command: C) {
+
     }
 }
 
@@ -97,8 +107,9 @@ implement_has_term_trait!(RequestVoteRpcResult);
 pub struct AllServersRules;
 
 impl AllServersRules {
-    fn apply_next_entry_if_needed<C, S>(server: &mut Server<C, S>)
+    fn apply_next_entry_if_needed<B, C, S>(server: &mut Server<B, C, S>)
     where
+        B: BlobStorage,
         C: Command,
         S: StateMachine<C>,
     {
@@ -115,9 +126,10 @@ impl AllServersRules {
         }
     }
 
-    fn convert_to_follower_if_needed<H, C, S>(server: &mut Server<C, S>, has_term: &H)
+    fn convert_to_follower_if_needed<H, B, C, S>(server: &mut Server<B, C, S>, has_term: H)
     where
         H: HasTerm,
+        B: BlobStorage,
         C: Command,
         S: StateMachine<C>,
     {
@@ -139,11 +151,12 @@ impl FollowerRules {
 struct AppendEntriesRpcLogic;
 
 impl AppendEntriesRpcLogic {
-    fn receive_append_entries_rpc<C, S>(
-        server: &mut Server<C, S>,
+    fn receive_append_entries_rpc<B, C, S>(
+        server: &mut Server<B, C, S>,
         arguments: AppendEntriesRpcArguments<C>,
     ) -> AppendEntriesRpcResult
     where
+        B: BlobStorage,
         C: Command,
         S: StateMachine<C>,
     {
@@ -210,11 +223,12 @@ impl AppendEntriesRpcLogic {
 struct RequestVoteRpcLogic;
 
 impl RequestVoteRpcLogic {
-    fn receive_request_vote_rpc<C, S>(
-        server: &mut Server<C, S>,
+    fn receive_request_vote_rpc<B, C, S>(
+        server: &mut Server<B, C, S>,
         arguments: RequestVoteRpcArguments,
     ) -> RequestVoteRpcResult
     where
+        B: BlobStorage,
         C: Command,
         S: StateMachine<C>,
     {

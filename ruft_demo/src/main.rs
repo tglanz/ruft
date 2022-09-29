@@ -65,6 +65,7 @@ impl StateMachine<String> for BasicStateMachine {
     }
 }
 
+#[derive(Debug)]
 struct BasicBlobStorage {
     internal: HashMap<String, Vec<u8>>,
 }
@@ -91,16 +92,17 @@ impl BlobStorage for BasicBlobStorage {
     }
 }
 
+type ConcreteServerType = Server<BasicBlobStorage, String, BasicStateMachine>;
+
 fn main() -> Result<(), Error> {
     let args = Cli::parse();
     let config = read_config(args.config)?;
 
-    let mut state_machine = BasicStateMachine::create();
-    let mut blob_storage = BasicBlobStorage::create();
-    {
-        let server = Server::create(&mut blob_storage, &mut state_machine);
-    }
-
+    let mut servers: Vec<ConcreteServerType> = config.cluster.ports.into_iter().map(|port| {
+        let state_machine = BasicStateMachine::create();
+        let blob_storage = BasicBlobStorage::create();
+        Server::create(blob_storage, state_machine).unwrap()
+    }).collect();
 
     Ok(())
 }
