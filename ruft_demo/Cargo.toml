@@ -6,7 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tonic = "0.8"
+prost = "0.11"
+anyhow = { version = "1.0" }
+thiserror = { version = "1.0" }
 clap = { version = "3.0", features = ["derive"] }
+tokio = { "version" = "1.21.2", features = ["full"] }
 serde = { version = "1.0.144", features = ["derive"] }
 serde_yaml = { version = "0.9.10" }
 ruft_core = { path = "../ruft_core" }
+
+[build-dependencies]
+tonic-build = "0.8"

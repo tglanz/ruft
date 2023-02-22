@@ -19,29 +19,6 @@ pub struct LogEntry<C: Command> {
     pub term: TermIndex,
 }
 
-// pub struct Log<C> {
-//     /// log entries
-//     entries: Vec<LogEntry<C>>,
-// }
-//
-// impl <C> Log<C> {
-//     pub fn len(&self) -> usize {
-//         self.entries.len()
-//     }
-//
-//     pub fn insert(&mut self, pos: usize, entry: LogEntry<C>) {
-//         self.entries.insert(pos, entry)
-//     }
-//
-//     pub fn remove(&mut self, pos: usize) -> Option<LogEntry<C>> {
-//         if pos < self.entries.len() {
-//             Some(self.entries.remove(pos))
-//         } else {
-//             None
-//         }
-//     }
-// }
-
 /// Persistent state on all servers.
 /// Updated on stable storage before responding to RPCs.
 pub struct PersistentServerState<C: Command> {

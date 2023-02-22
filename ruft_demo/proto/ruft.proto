@@ -1,0 +1,23 @@
+syntax = "proto3";
+package ruft;
+
+message AppendEntriesRequest {
+    string message = 1;
+}
+
+message AppendEntriesResponse {
+    string message = 1;
+}
+
+message RequestVoteRequest {
+    string message = 1;
+}
+
+message RequestVoteResponse {
+    string message = 1;
+}
+
+service Node {
+    rpc AppendEntries (AppendEntriesRequest) returns (AppendEntriesResponse);
+    rpc RequestVote (RequestVoteRequest) returns (RequestVoteResponse);
+}
