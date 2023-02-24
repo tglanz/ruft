@@ -49,19 +49,37 @@ impl StateMachine<String> for BasicStateMachine {
 type ConcreteBlobStorage = MemoryBlobStorage;
 type ConcreteServer = Server<ConcreteBlobStorage, String, BasicStateMachine>;
 
+fn format_localhost_address(port: usize) -> String {
+    format!("[::1]:{}", port)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Cli::parse();
     let config = Config::from_file(args.config)?;
 
-    let mut servers: Vec<ConcreteServer> = config.cluster.ports.into_iter().map(|port| {
-        let state_machine = BasicStateMachine::create();
-        let blob_storage = ConcreteBlobStorage::create();
-        Server::create(blob_storage, state_machine).unwrap()
-    }).collect();
+    let mut join_handles = Vec::new();
 
-    
-    // NodeService::serve(fmt!("[::1]:{}", servers))
+    for port in config.cluster.ports {
+        let server = {
+            let state_machine = BasicStateMachine::create();
+            let blob_storage = ConcreteBlobStorage::create();
+            Server::create(blob_storage, state_machine).unwrap()
+            
+        };
+
+        let join_handle = {
+            let address = format_localhost_address(port);
+            let task = NodeService::serve(address);
+            tokio::spawn(task)
+        };
+
+        join_handles.push(join_handle);
+    }
+
+    for handle in join_handles {
+        handle.await?;
+    }
 
     Ok(())
 }

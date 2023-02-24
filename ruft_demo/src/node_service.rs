@@ -22,11 +22,12 @@ pub struct NodeService { }
 
 impl NodeService {
     pub async fn serve(address: impl AsRef<str>) -> Result<()> {
+        println!("serving: {}", address.as_ref());
         Server::builder()
             .add_service(NodeServer::new(NodeService::default()))
             .serve(address.as_ref().parse()?)
             .await?;
-        
+        println!("closing: {}", address.as_ref());
         Ok(())
     }
 }
